@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+                        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="board">
+   <insert id="addContentInfo" parameterType="com.tjoeun.dto.ContentDTO">
+   
+     <selectKey keyProperty="content_idx" order="BEFORE" resultType="java.lang.Integer">     
+       select content_seq.nextval from dual
+     </selectKey>
+   
+     <![CDATA[
+       insert into content_table(content_idx, content_subject, content_text,
+          content_file, content_writer_idx, content_board_idx, content_date)
+          values(#{content_idx}, #{content_subject}, #{content_text},
+                 #{content_file, jdbcType=VARCHAR}, #{content_writer_idx},
+                 #{content_board_idx}, sysdate)
+     ]]>
+   </insert>
+   
+   <!-- 
+        게시판 번호를 parameter 에 전달하면
+        DB table 에서 게시판 이름 가져오기
+    -->
+   <select id="getBoardInfoName" 
+           parameterType="java.lang.Integer" 
+           resultType="java.lang.String" >
+     <![CDATA[
+         SELECT board_info_name
+           FROM board_info_table
+          WHERE board_info_idx=#{board_info_idx}
+     ]]> 
+   </select> 
+
+   <select id="getContentList"
+           parameterType="java.lang.Integer"
+           resultType="com.tjoeun.dto.ContentDTO">
+     <![CDATA[
+        SELECT c.content_idx, c.content_subject, u.user_name content_writer_name, 
+               to_char(c.content_date, 'YYYY-MM-DD') content_date
+          FROM content_table c, user_table u
+         WHERE c.content_writer_idx = u.user_idx
+           AND c.content_board_idx = #{content_board_idx}
+        ORDER BY c.content_idx desc     
+     ]]> 
+   </select>  
+   
+   <!-- 
+	// 상세페이지에서 작성한 글 내용을 화면에 보여주기 위한 SQL
+	// DB 에서 게시글의 정보를 가져올 때 content_writer_idx 도 가져와서
+	// 현재 로그인한 회원에 정보(Session Scope 에 있음)의 uset_idx 와 비교해서
+	// 같으면, 글쓴이와 로그인한 회원이 같은 사람임
+    -->
+   <select id="getContentInfo"
+           parameterType="java.lang.Integer"
+           resultType="com.tjoeun.dto.ContentDTO">
+     <![CDATA[
+        SELECT u.user_name content_writer_name, 
+               to_char(c.content_date, 'YYYY-MM-DD') content_date,
+               c.content_subject, c.content_text, c.content_file, c.content_writer_idx
+          FROM content_table c, user_table u
+         WHERE c.content_writer_idx = u.user_idx
+           AND c.content_idx = #{content_idx}
+         ORDER BY c.content_idx desc    
+     ]]> 
+   </select>  
+   
+    <update id="modifyContentInfo"
+            parameterType="com.tjoeun.dto.ContentDTO">
+     <![CDATA[
+        UPDATE content_table
+           SET content_subject = #{content_subject},
+               content_text = #{content_text},
+               content_file = #{content_file, jdbcType=VARCHAR}
+         WHERE content_idx = #{content_idx} 
+     ]]> 
+   </update>  
+   
+   <delete id="deleteContentInfo"
+           parameterType="java.lang.Integer" >
+     <![CDATA[ 
+         DELETE FROM content_table
+		  WHERE content_idx = #{content_idx}   
+     ]]> 
+   </delete>
+   <select id="getContentCount"
+           parameterType="java.lang.Integer"
+           resultType="java.lang.Integer">
+     <![CDATA[ 
+       SELECT COUNT(*) FROM content_table
+        WHERE content_board_idx = #{content_board_idx }
+     ]]>      
+   </select>
+</mapper>
+
