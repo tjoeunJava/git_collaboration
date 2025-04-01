@@ -28,6 +28,7 @@ public class UserValidator implements Validator{
 		
 		if(beanName.equals("joinUserDTO")){
 			// 중복확인 버튼 누르지 않고 회원가입 버튼을 눌렀을 때 
+			// userDTO.isUserIdExist() == false 이 됨
 			if (userDTO.isUserIdExist() == false) {
 				errors.rejectValue("user_id", "DidntCheckUserId");
 			}
